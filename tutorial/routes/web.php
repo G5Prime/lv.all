@@ -2,6 +2,7 @@
 
 // Importierte Klasse von Models
 use App\Models\Post;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Spatie\YamlFrontMatter\YamlFrontMatter;
 
@@ -16,13 +17,38 @@ use Spatie\YamlFrontMatter\YamlFrontMatter;
 |
 */
 
-// Overriden
 Route::get('/', function () {
-    $document = YamlFrontMatter::parseFile(
-        resource_path('posts/a-post-name.html')
-    );
-ddd($document->body());
-ddd($document->matter());
+    $files = File::files(resource_path("posts"));
+
+    //colect Methode
+    $posts = collect($files)
+        ->map(function ($file){
+            $document = YamlFrontMatter::parseFile($file);
+
+            return new Post(
+                $document->title,
+                $document->excerpt,
+                $document->date,
+                $document->body(),
+                $document->slug
+            );
+        });
+
+        /*  //Array Map
+    $posts = array_map(function ($file){
+        $document = YamlFrontMatter::parseFile($file);
+
+        return new Post(
+            $document->title,
+            $document->excerpt,
+            $document->date,
+            $document->body(),
+            $document->slug
+        );
+    }, $files);
+*/
+    return view('posts', ['posts' => $posts]);
+
 //    return view('welcome');
 });
 
